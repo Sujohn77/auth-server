@@ -9,7 +9,13 @@ import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [JwtModule.register(s)],
+  imports: [
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      global: true,
+      signOptions: { expiresIn: '1h' },
+    }),
+  ],
   controllers: [AuthController],
   providers: [AuthService, UsersService, ConfigService],
 })
