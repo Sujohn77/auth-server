@@ -9,10 +9,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './user.entity';
-
 import { IApiUser, UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,23 +16,21 @@ import { AccessTokenGuard } from '../common/guards/accessToken.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
   async getUsers(): Promise<IApiUser[]> {
-    return this.usersRepository.find();
+    return this.usersService.findAll();
   }
 
   @Get(':id')
-  async getUser(@Param() id: string): Promise<IApiUser> {
-    return this.usersRepository.findOneBy({ id: Number(id) });
+  @UseGuards(AccessTokenGuard)
+  async getUser(@Param('id') id: number): Promise<IApiUser> {
+    return this.usersService.findOne(id);
   }
 
   @Post()
+  @UseGuards(AccessTokenGuard)
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }

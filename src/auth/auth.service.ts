@@ -1,7 +1,6 @@
 import {
   Post,
   Body,
-  UseGuards,
   Injectable,
   ForbiddenException,
   ConflictException,
@@ -84,7 +83,7 @@ export class AuthService {
         },
         {
           secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-          expiresIn: '15m',
+          expiresIn: '1m',
         },
       ),
       this.jwtService.signAsync(
@@ -111,8 +110,8 @@ export class AuthService {
       throw new ForbiddenException('Access Denied');
 
     const refreshTokenMatches = await verifyTokens(
-      user.refreshToken,
       refreshToken,
+      user.refreshToken,
     );
 
     if (!refreshTokenMatches) throw new ForbiddenException('Access Denied');
