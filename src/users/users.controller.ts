@@ -5,15 +5,18 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
-import { AccessTokenGuard } from '../auth/guards/access.guard';
-import { UsersService } from './users.service';
+
+import { IApiUser, UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { AccessTokenGuard } from '../common/guards/accessToken.guard';
 
 @Controller('users')
 export class UsersController {
@@ -24,8 +27,18 @@ export class UsersController {
   ) {}
 
   @Get()
-  async getUsers(): Promise<User[]> {
+  async getUsers(): Promise<IApiUser[]> {
     return this.usersRepository.find();
+  }
+
+  @Get(':id')
+  async getUser(@Param() id: string): Promise<IApiUser> {
+    return this.usersRepository.findOneBy({ id: Number(id) });
+  }
+
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
   }
 
   @UseGuards(AccessTokenGuard)

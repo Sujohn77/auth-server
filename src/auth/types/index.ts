@@ -5,14 +5,7 @@ export interface IValidateUserParams {
   password: string;
 }
 
-export interface ICommonException {
-  message: string;
-  code: string;
+export interface IAutTokensResponse {
+  refreshToken: string;
+  accessToken: string;
 }
-
-export interface IAuthUserResponse {
-  user: User;
-  token: string;
-}
-
-export type AuthResponseType = Promise<IAuthUserResponse | ICommonException>;

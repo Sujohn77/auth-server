@@ -10,9 +10,9 @@ require('dotenv').config();
 async function bootstrap() {
   const server = express();
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
-
+  app.setGlobalPrefix('api');
   app.enableCors({
-    origin: 'http://localhost:3000', // or use a regular expression to match multiple origins
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

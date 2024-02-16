@@ -2,6 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+import { StringLiteral } from '@tanstack/react-router';
+
+export interface IApiUser {
+  id: number;
+  email: string;
+  username: string;
+  refreshToken?: string;
+}
 
 @Injectable()
 export class UsersService {
@@ -10,12 +18,23 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findAll(): Promise<IApiUser[]> {
+    const users = await this.usersRepository.find();
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+    }));
   }
 
-  async findOne(id: number): Promise<User> {
-    return this.usersRepository.findOne({ where: { id } });
+  async findOne(id: number): Promise<IApiUser> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      refreshToken: user.refreshToken,
+    };
   }
 
   async create(user: Partial<User>): Promise<User> {

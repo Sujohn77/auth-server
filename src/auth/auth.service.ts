@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
 
@@ -18,8 +19,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { hashData, verifyTokens } from '../utils';
-import { AccessTokenGuard } from './guards/access.guard';
+
 import { AuthDto } from './dto/auth.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -32,7 +34,7 @@ export class AuthService {
   ) {}
 
   @Post('/signup')
-  async signup(@Body() args: { email: string; password: string }) {
+  async signup(@Body() args: CreateUserDto) {
     const { email } = args;
     const userExists = await this.usersRepository.findOneBy({ email });
     if (userExists) {
@@ -40,15 +42,16 @@ export class AuthService {
     }
 
     const password = await hashData(args.password);
-    const user = await this.usersRepository.create({ ...args, password });
-
-    return {
-      token: jwt.sign({ userId: user.id }, process.env.APP_SECRET),
-      user,
-    };
+    const newUser = await this.usersService.create({
+      ...args,
+      password,
+      refreshToken: '',
+    });
+    const tokens = await this.getTokens(newUser.id, newUser.username);
+    await this.updateRefreshToken(newUser.id, tokens.refreshToken);
+    return tokens;
   }
 
-  @UseGuards(AccessTokenGuard)
   @Post('/login')
   async login(@Body() args: AuthDto) {
     const { email, password } = args;
@@ -57,15 +60,12 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    const valid = await verifyTokens(password, user.password);
-    if (!valid) {
-      return { message: 'Wrong password', code: 'WRONG_PASSWORD' };
-    }
-
-    return {
-      token: jwt.sign({ userId: user.id }, process.env.APP_SECRET),
-      user,
-    };
+    const passwordMatches = await verifyTokens(password, user.password);
+    if (!passwordMatches)
+      throw new BadRequestException('Password is incorrect');
+    const tokens = await this.getTokens(user.id, user.username);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    return tokens;
   }
 
   async updateRefreshToken(userId: number, refreshToken: string) {
